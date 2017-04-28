@@ -1,2 +1,2 @@
-# kivy
+# Learning Kivy
 learning kivy
