@@ -1,0 +1,93 @@
+from kivy.app import App
+from kivy.properties import ObjectProperty, ListProperty, StringProperty, NumericProperty
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.label import Label
+from kivy.uix.listview import ListItemButton
+
+from Oreilly.open_weather_map import OpenWeatherMap
+
+
+class WeatherRoot(BoxLayout):
+    add_location_form = ObjectProperty()
+    current_weather = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        super(WeatherRoot, self).__init__(**kwargs)
+        self.owm = OpenWeatherMap(self)
+
+    def show_current_weather(self, location=None):
+        self.clear_widgets()
+        if self.current_weather is None:
+            self.current_weather = CurrentWeather()
+
+        if location is not None:
+            self.current_weather.location = location
+        self.owm.search_current_weather_by_location(self.current_weather.location)
+        self.add_widget(self.current_weather)
+
+    def show_add_location_form(self):
+        self.clear_widgets()
+        if self.add_location_form.cancel_button is None:
+            self.add_location_form.cancel_button = CancelButton()
+            self.add_location_form.add_widget(self.add_location_form.cancel_button)
+        self.add_widget(self.add_location_form)
+
+
+class AddLocationForm(BoxLayout):
+    search_input = ObjectProperty()
+    search_results = ObjectProperty()
+    cancel_button = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        super(AddLocationForm, self).__init__(**kwargs)
+        self.owm = OpenWeatherMap(self)
+
+    def search_location(self):
+        print('Searching {keyword}...'.format(keyword=self.search_input.text))
+        self.owm.search_current_weather_by_keyword(self.search_input.text)
+
+    def args_converter(self, index, data_item):
+        city, country = data_item
+        return {'location': (city, country)}
+
+
+class CancelButton(Button):
+    pass
+
+
+class LocationButton(ListItemButton):
+    location = ListProperty()
+
+
+class CurrentWeather(BoxLayout):
+    location = ListProperty(('New York', 'US'))
+    conditions = StringProperty()
+    temp = NumericProperty()
+    temp_min = NumericProperty()
+    temp_max = NumericProperty()
+
+
+class WeatherApp(App):
+    pass
+
+
+class LabApp(App):
+    pass
+
+
+class LabNoKvApp(App):
+    # def print_it(self, instance, value):
+    #     print('User clicked on', value)
+
+    def build(self):
+        # widget = Label(text='Hello [ref=world][color=0000ff]World[/color][/ref]', markup=True)
+        # widget.bind(on_ref_press=self.print_it)
+        # return widget
+        l = Label(text='Very big big line', text_size=(200, None))
+        return l
+
+
+if __name__ == '__main__':
+    WeatherApp().run()
+    # LabNoKvApp().run()

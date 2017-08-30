@@ -1,0 +1,86 @@
+import json
+
+from kivy.factory import Factory
+from kivy.network.urlrequest import UrlRequest
+
+
+
+
+
+class OpenWeatherMap(object):
+    def __init__(self, invoker):
+        # self.city_list = None
+        # with open(r'city.list.json', mode='r', encoding='utf-8') as f:
+        #     self.city_list = json.load(f)
+        self.api_url = 'http://api.openweathermap.org/data/2.5/'
+        self.api_key = '&APPID=37f496ef5b722f579d2d5fc5afabc932'
+        self.units_format = '&units=metric'  # For temperature in Celsius
+        self.invoker = invoker
+
+    def search_current_weather_by_keyword(self, keyword):
+        search_template = self.api_url + 'find?q={keyword}' + self.api_key + self.units_format
+        search_url = search_template.format(keyword=keyword)
+        print('search url: {url}'.format(url=search_url))
+        request = UrlRequest(search_url, self.found_location)
+
+    def found_location(self, request, data):
+        print(data)
+        print(type(data))
+        # search_results = [
+        # 'City: {city}, Country: {country}, Weather: {weather}'.format(city=d['name'], country=d['sys']['country'],
+        #                                                               weather=','.join(
+        #                                                                   w['main'] for w in d['weather'])) for d in
+        # data['list']]
+        cities = [(d['name'], d['sys']['country']) for d in data['list']]
+        if str(self.invoker.__class__) == "<class '__main__.AddLocationForm'>":
+            self.invoker.search_results.item_strings = cities
+            # self.invoker.search_results.adapter.data.clear()
+            # self.invoker.search_results.adapter.data.extend(search_results)
+            # self.invoker.search_results._trigger_reset_populate()
+        else:
+            raise ValueError("The invoker is supposed to be <class '__main__.AddLocationForm'>")
+
+    def search_current_weather_by_location(self, location):
+        search_template = self.api_url + 'weather?q={},{}' + self.api_key + self.units_format
+        search_url = search_template.format(*location)
+        print('search url: {url}'.format(url=search_url))
+        request = UrlRequest(search_url, self.weather_retrieved)
+
+    def weather_retrieved(self, request, data):
+        print(data)
+        print(type(data))
+        if str(self.invoker.__class__) == "<class '__main__.WeatherRoot'>":
+            self.invoker.current_weather.conditions = ', '.join([weather['description'] for weather in data['weather']])
+            self.invoker.current_weather.temp = data['main']['temp']
+            self.invoker.current_weather.temp_min = data['main']['temp_min']
+            self.invoker.current_weather.temp_max = data['main']['temp_max']
+        else:
+            raise ValueError("The invoker is supposed to be <class '__main__.WeatherRoot'>")
+
+
+            # def get_city_id(self, keyword):
+            #     match_citys = []
+            #     for city in self.city_list:
+            #         if keyword.lower() in city['name'].lower():
+            #             match_citys.append(city['id'])
+            #     return ','.join(match_citys)
+
+            # def count_duplicate_city_name(self):
+            #     city_counter = {}
+            #     results = []
+            #     for city in self.city_list:
+            #         if city['name'] in city_counter:
+            #             city_counter[city['name']] += 1
+            #         else:
+            #             city_counter[city['name']] = 1
+            #     for city in city_counter:
+            #         if city_counter[city] > 1:
+            #             results.append((city, city_counter[city]))
+            #             # print('City: {city} Count: {count}\n'.format(city=city, count=city_counter[city]))
+            #     results.sort(key=lambda x: x[1], reverse=True)
+            #     for city in results:
+            #         print('City: {city} Count: {count}\n'.format(city=city[0], count=city[1]))
+
+# if __name__ == '__main__':
+#     w = OpenWeatherMap()
+#     w.count_duplicate_city_name()

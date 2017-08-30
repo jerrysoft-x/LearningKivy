@@ -1,0 +1,59 @@
+import logging
+from kivy.uix.boxlayout import BoxLayout
+from kivy.gesture import GestureDatabase, Gesture
+
+gesture_strings = {
+    'left_to_right_line': 'eNpt1Wlwk0Ucx/FUKEdBqFSkYqVRUAJCqQJSubpcLmIREMEglKZHaEohzeZo05aFpEABFamAChQhiiICYi2HIEcLch8zKdahCkp848mL6oDDOMzgL2vSwf82L9JnPvnus8/u0yfxtcktLCguTcm3utwepzWOR/4KQz+/iJHiPpM51mAwlBTkuW2iDWceoyH8MrfDm81akG9zi7acJRn+0654i5wpy+EsyvPkukUsZ7H11ab+ubfN7fGxy+0sKrS6RLtM0b7VqaerIE50wAV0lCLOpOZyFBXY3S7RKVN0NrU6bGo4iBP3Y1QXKbqazDEY5RXxvC50OuOKZWwPBaXiAV63auQ/jdYKgyfHFq67SZFgsqG7XpK3c2jf8zateFCK7qr4IWYUrzPMCxdLBzbeOniZRYqHpOihiqvSFUxo9OpFohQPq+K7Yac2r+u2Vi96SvGIKq4srbj1l9+kF0lSPKqKb+2T/8zvU68XvaRIVsU3pq1Hf865Fi7KRs1NSRzvixRGKR5TRYM7s8eEBodePC5Fb1Vcqi7ttG+VUS/6SPGEKs7fbCqbeIfpxZNS9FXF6YJFCdzr1QuTFP1UcfzH5N0TbtaEiwWj+/wkL0Z3vb8UT6niyB9DjnXc1koxQIqBqjjQs3/vFXMNepEixSBVbL875XDtDLUW1m5o9YC0aJEqxdOq2HBu040O48LnSM8bEZfwS220eEaKweEi3Z8w/9Ds9q0UQ6QYqortzoxJcxpUUTwieGZyWnS1z0oxTBW1F7uXV4436kWaFM+p4rDxt9V799foxXApRqji+KwbztizrRQjpRililPLZpYn+b16MVqKdFWc21O/bPBwphdMijGquORNG5RlStSLsVKMU0WwYVrS8GaHXoyXYoIqLi9fd+KqP6QXz0vBVdF4Yczfc8ad1IuJUrygiitjCsyXC8NPQ7p/YJex0zOiuz5JihdV0XRr113nnfV6kSHFZFV8X+op6WXy6cVLUkxRxbW63ju3/J73v8Jq7hz+vsp1Wq32yNfP1EwxzcSZ3ae+7jhzBdVBpXgZGAgfxtyD04H1tHwFGKLlDM6KDLScCTTS8lVg1t3w6x40A7VLmgXcSsvXgNcpzubMkRodHorgHKCFYibQQXEusIpiFrCeogUYopjNmTBQzAHGU8wFMop5QO2SrEDtkuYBtUvK58ypzW4DGikWALXZ5wO1XSoEarMvAAYpLsSxNrsdx9rai3Csze7AccuKmtW/SqUQnLkNFJ3AVIouoIWiG1hF0YMffu2cxUAHxRJggKIXGKJYyllxPMUyoHbOcqB2zkWclUSHR9ZbKSTQQnExsJniEs68Roo+oDbcD/RRrABGd97dVT1QlWIpZ6XJkYerBZcBsyguB7ac0xg5ZyWwJvK8t+AKYJCWKzkri6e4Csgovg60UHwDqM3+JjBAcTVn5S0TpUbwLSCLXmcU1wCLosuMYhWwhg5/GxiiuJazRel0+DqghZbrgVUU3wEGKL4LbKb4HmcyleIGoDbRRqCD4iagNlE1UFvRZs4WGyi+DzRS3AJkFLcC19ANCQADdOc/AIYofsjZEm2Z24Da1n0EvE4n+pgzn3bx24GJFD8BaivaAUyj+ClQW+ZO4FSKu4BmiruB2j36DKjdoz3ADRQ/B+6gWAM8SPELYJBiLbCJ4l7O/C27xCK4D5hIcT/QSPEAMJXil8CJFA8CzRQPAW0UvwJ6KR4GrqR4BBigeBRYT/EY8CzFOmCQYj2wieJx4K8UTwCbKX4NvE3xJGcV2iafAnageBqo7fwZoLbzZ4EmiueA2u04b/XkZJs74thdtMDqzLbnWsUFnn5oY/i1ydwWH9izF1rFRXV7xCVPTsq/K81Clg==',
+    'right_to_left_line': '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',
+    'bottom_to_top_line': 'eNpt1ntwTHcUB/BNkxBbJKh6tazWYxFsiopQuxSX0koalU0lJNlcdiWyeza7edBfsxJChdqKN40trapnKCr1yFY06lVRU2OUkY4af3RqMv6o6ZhK771zjp65Y//Y7Hzyvfs75/x+e3cDkY48V1HpsAVyoc/vlY0S/gXDoKUQIeAFsz3aYDAUu3J9ToiUbBaD9rC3UZ6csmuB0wdRki3PpGKEPVZ5xnea5/G6c/0OH0RLtmjn4/LcnSPtbZV/F/q87jy5ENpkQtvnLp2qBYwQoxTQToDRrK3lcbsKfIXwYia0Nz/3smQ1YIQOylUdBcSa7RHKVSUQJ1mrkwxzb1baNCiFTlL978Yt3WZeSfHnONV0ZwFdzM7/c04lcbduaNHGwasw8ZKArvrEnU57BlatXoyJlwV00yd+29x/5PLd+ZjoLqCHlti+t8v4p1MCauJmy477S2JmYaKngF5aInS4Y9rKau09bjT3OudtnIqJVwS8qiV2degSuy4yS038On/ztfzmcZjoLaCPPnHduL6Hw2PGhElAX33i2uTg2oyM7ph4TcDr+sTViJ7GvcE4TPQT0F+fuHAkNn9DagsmBggYqO+l0RxjXzGkCRNmAYO0xKZH7X7+c76WaLgcGRInw5gYLGCIfqan/nkU1dRqwUS8gKFaYk3kX3eqZhjUxLH7924fPUh1DBMwXEtUVN/6V16tJQ7s2ueynA5gwiIgQUv4pGBS2SYtUfO4d0JLkgETbwgYoSbqy+M9FQl+befk0fFVjxspMVLAKF3CWpOdURZtpsSbAkZriartFY60UVricIyr9YHRholEAWO0xLrK6X3PLFHrsB5/6L/0dGcWJpIEjNUS2/6eG/HHWHUe1vDwSbM7J1BinIC39ImGuukLTeklmBgvwKpPnL+Vut9yZw8mbAIm6BOXnsx5OCGb9mWigLf1iab0I4cGm2jqkwRM1id+6X18TMIomscUAZKWCKWNOPFkTVhNXL9X15A4rT0mpgqYpk/cqLJ2nvigHybeETBdn7gZdTZ66pV4TMwQ8K4+cavrlAEpsYmYeE/ATH3idv+LUnpKsj9HtrdX71cOrywX4O0nORNSzJKtJKDdBCWbs75VfVTC+xybtReVkMrQ1QeTsziGtdtmJXzAcKEBL5/NMQsxjWMAL7dzvIsLpTPMo/f8kKMJL5/DkRbK4EgLZXJsRpyrYBAx34SXz1MwRBjCZJaCtYiLApjMVjBMSKPLYVhAo3NwzML3zOVI85QZuqnN+RypzQUcqU0nxx24uosj9b6QoYcWyuNowYXyOdoQF3FMxssLOHow6eZYhiV5OIYwCRwPYdLLkYZcyLEF0ccQ4hD9bOOeYRFH6qiYYzJiCUeafCk7IUCHYTE7S89wCcdaxI840r4Ljk2Y/Jgj9V7GTrKXOgpwpI1bypHaLOdIbVYo6CGkjVvGkTparmAWYRCxkiO1uYIjdbSSIx3FTzjSbq5SMJmwFQ9DFcNC6n01R/oUr+FIA/lUQRshDWQtx3m4UFBBCyH1/pmCJsIgFr+OI53kao60cesZ+ui2toEjFb+RI9W5ScE4QvrEbeZIdW5R0EBIJW3leBXb3CbZilsIafLbGfoNuNDnHKnOGgWbCeks7eBIZynEkUr6giMdm50c6djs4kh1fsmwiO5gX3G0Ypu7OVKdX3Okk7yHI5X0DUdafS/DYjqK+zjSlPZzpN08wJFuLAc50ugOKa+bCOmuWMuRpnSYI9V5hGEJfRC+5UirH+XoxoWOcaQpHedIU/qOI/26OMGR6qzjSHV+z7CUTt1JjjTkUxzpG/Y0R2rzDEfa93qO9F0c5kiT/4EjfXOd5UgDaeBIx/scx1pc6EeOYUw2cqQpnedIP41+4kiju6BgWI8XZX9Otr2d8trnzpe92QUOGS5J1rot6mOrPUr5R0H2Ihku29U8XPHnDPsPO/p40A==',
+    'top_to_bottom_line': 'eNp91VtMFFcYwPGhAipqFy8oRRG0XhaVlUqL9cqA4lgUXaXqoFJhlym7sOzutzvDgvpFjAkPXuI1CsakJbF98MH4YKLGByAmRi1N1YgJRAR59KEhxmfpmZNvyHFqZh5g+O/v3AYytE3yNwabWz31Wlw3YlqaQt9ByjsJSQhfudUUSZISwTo9AJMUeYnELzWVfQlowfqADsmK3DjOL9XFKs10JBqL1Bl+HVIUOTV4oMd3t0OdzD6O67FIoxaH1GqY/MWlKzlIgylsA1MR0tx8rWgkGNbjMK0apru/OMxrgjSYwUZ9jeByq0lsVAukK8Wlvatm9WZKPLTCTKV4eGzcNTaebvgCpp6FMNsdYO7ScP6H4Xw5wMTbvtDjvlAfiTkIGVxcg8Q8aG4zxRsunpCYizDPLgY/E5kI33BxtvPpjc4nXPRnXKzKuKiSyEKY7ywWIGRzccpYW2kUSaZ4+dkqCxFyuNC7yud0befi746Bcx0DF0jkIixyFosRvjVFd+Tdp5zRZC4esdt3nzJJLEFY6iyWISx3Fm6EPLvoepE980W2RGIFwkpnsQoh31l4EFbbRPdtz+i/ntEeEgUI3zmLNQiFzuJ7hB/sorf0Sl7pFTeJIoS1zuJHhHXOYj3CBrt4+mqo4tWQl8RGhE3OYjNCsV38c+b+wzP3rbPICCVcnDSf42wu+gsvryu8vJFEKcIWZ7EVocxZbENQuDhdcjOr5A/zb7379fvwn+/DN0lsR/iJi6tldfvLND7HoEsac0kfSZQj7Pif4HPcIrETocK+ytDxe38dv/eMxC6E3Xbx1ppDU6eb7yt/TNPC9PrxVsMetyInCvhLUJGP3uE37bCXRa89VrJYY8Xz/A3ZDj+zGLXHfWLkN0ntsJ/FNivW0JwHxOilqIoxl2KVGCWKB4XY+pziITHeodUPi/ECyWoxyhR/EY7ZYm3piPBAEtZCNexeptg8RrGWxVyKxjA9EJ8YreF+MfbQPuuEqBeQ1IQYGyH5qxDBmrNeiNERigExWscMsphOMZxD+2xgUaLYVEMLNU6cTpFD3SRDLI5QpH+X7dAkxt8ohsVo/d4jwkINbbRQVIzWPkGMuSRjQgxaDzkuxt9puC5sfiIaYjxBw5vFaJ09IWx+IrZohq9Wncp+0CMhLVYb9mvQqhQ/6DSv62oy+yBc26TBUdUcAMcMn+c/LM/hSA=='
+}
+
+gestures = GestureDatabase()
+for name, gesture_string in gesture_strings.items():
+    gesture = gestures.str_to_gesture(gesture_string)
+    gesture.name = name
+    gestures.add_gesture(gesture)
+
+
+class GestureBox(BoxLayout):
+
+    def __init__(self, **kwargs):
+        for name in gesture_strings:
+            self.register_event_type('on_{}'.format(name))
+        super(GestureBox, self).__init__(**kwargs)
+        self.logger = logging.getLogger('WeatherApp.class.GestureBox')
+
+    def on_left_to_right_line(self):
+        pass
+
+    def on_right_to_left_line(self):
+        pass
+
+    def on_bottom_to_top_line(self):
+        pass
+
+    def on_top_to_bottom_line(self):
+        pass
+
+    def on_touch_down(self, touch):
+        touch.ud['gesture_path'] = [(touch.x, touch.y)]
+        super(GestureBox, self).on_touch_down(touch)
+
+    def on_touch_move(self, touch):
+        touch.ud['gesture_path'].append((touch.x, touch.y))
+        super(GestureBox, self).on_touch_move(touch)
+
+    def on_touch_up(self, touch):
+        # print(touch.ud['gesture_path'])
+        if 'gesture_path' in touch.ud:
+            gesture = Gesture()
+            gesture.add_stroke(touch.ud['gesture_path'])
+            gesture.normalize()
+            match = gestures.find(gesture, minscore=0.90)
+            self.logger.debug('matched gestures are {}'.format(match))
+            if match:
+                print('{} happened'.format(match[1].name))
+                self.dispatch('on_{}'.format(match[1].name))
+        super(GestureBox, self).on_touch_up(touch)
+
